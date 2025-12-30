@@ -3,16 +3,32 @@ import jwt from "jsonwebtoken";
 import User from "../models/User.model.js";
 import Responder from "../models/Responder.model.js";
 
+/* =========================
+   JWT TOKEN GENERATOR
+========================= */
 const generateToken = (id, role) => {
-  return jwt.sign({ id, role }, "prakha1234", {
-    expiresIn: "7d"
-  });
+  return jwt.sign(
+    { id, role },
+    process.env.JWT_SECRET,
+    { expiresIn: "7d" }
+  );
 };
 
+/* =========================
+   COOKIE OPTIONS (REUSABLE)
+========================= */
+const cookieOptions = {
+  httpOnly: true,
+  secure: process.env.NODE_ENV === "production", // true on Render
+  sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
+  maxAge: 7 * 24 * 60 * 60 * 1000 // 7 days
+};
 
-// SIGNUP
+/* =========================
+   SIGNUP
+========================= */
 export const signup = async (req, res) => {
-  const { name, email, password, role, category} = req.body;
+  const { name, email, password, role, category } = req.body;
 
   try {
     const hashedPassword = await bcrypt.hash(password, 10);
@@ -32,14 +48,10 @@ export const signup = async (req, res) => {
 
       const token = generateToken(user._id, "user");
 
-      res.cookie("token", token, {
-        httpOnly: true,
-        secure: false, // true in production (HTTPS)
-        sameSite: "lax",
-        maxAge: 7 * 24 * 60 * 60 * 1000
-      });
+      res.cookie("token", token, cookieOptions);
 
       return res.status(201).json({
+        success: true,
         message: "Signup successful"
       });
     }
@@ -60,28 +72,25 @@ export const signup = async (req, res) => {
 
       const token = generateToken(responder._id, "responder");
 
-      res.cookie("token", token, {
-        httpOnly: true,
-        secure: false,
-        sameSite: "lax",
-        maxAge: 7 * 24 * 60 * 60 * 1000
-      });
+      res.cookie("token", token, cookieOptions);
 
       return res.status(201).json({
+        success: true,
         message: "Signup successful"
       });
     }
 
-    res.status(400).json({ message: "Invalid role" });
+    return res.status(400).json({ message: "Invalid role" });
+
   } catch (err) {
-    console.log(err.message);
-    
-    res.status(500).json({ message: err.message });
+    console.error("Signup error:", err);
+    res.status(500).json({ message: "Server error" });
   }
 };
 
-
-// LOGIN
+/* =========================
+   LOGIN
+========================= */
 export const login = async (req, res) => {
   const { email, password, role } = req.body;
 
@@ -100,21 +109,22 @@ export const login = async (req, res) => {
 
     const token = generateToken(account._id, role);
 
-    res.cookie("token", token, {
-      httpOnly: true,
-      secure: false,
-      sameSite: "lax",
-      maxAge: 7 * 24 * 60 * 60 * 1000
-    });
+    res.cookie("token", token, cookieOptions);
 
-    res.json({
+    return res.json({
+      success: true,
       message: "Login successful"
     });
+
   } catch (err) {
-    res.status(500).json({ message: err.message });
+    console.error("Login error:", err);
+    res.status(500).json({ message: "Server error" });
   }
 };
 
+/* =========================
+   GET CURRENT USER
+========================= */
 export const getMe = (req, res) => {
   res.json({
     user: req.user,
@@ -122,15 +132,15 @@ export const getMe = (req, res) => {
   });
 };
 
+/* =========================
+   LOGOUT
+========================= */
 export const logout = async (req, res) => {
   try {
-    console.log("Logout API called");
-
-    // ✅ Clear JWT cookie
     res.clearCookie("token", {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
-      sameSite: "strict"
+      sameSite: process.env.NODE_ENV === "production" ? "none" : "lax"
     });
 
     return res.status(200).json({

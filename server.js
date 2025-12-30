@@ -9,13 +9,13 @@ import User from "./src/models/User.model.js";
 dotenv.config();
 connectDB();
 
-const PORT = 5001;
+const PORT = process.env.PORT || 5003;
 
 const httpServer = createServer(app);
 
 export const io = new Server(httpServer, {
   cors: {
-    origin: "http://localhost:5173",
+    origin: ["http://localhost:5173","https://vishal-frontend-dgh2t3q1n-prakharg69s-projects.vercel.app/"],
     credentials: true,
   },
 });
