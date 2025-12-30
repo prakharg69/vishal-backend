@@ -17,10 +17,9 @@ app.use((req, res, next) => {
 app.use(cookieParser());
 app.use(express.json());
 app.use(cors({
-  origin:["http://localhost:5173","https://vishal-frontend-dgh2t3q1n-prakharg69s-projects.vercel.app/"],
-  credentials: true
+  origin: true,
+  credentials: true,
 }));
-
 
 
 app.use("/api/auth", authRoutes);

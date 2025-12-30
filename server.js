@@ -15,11 +15,10 @@ const httpServer = createServer(app);
 
 export const io = new Server(httpServer, {
   cors: {
-    origin: ["http://localhost:5173","https://vishal-frontend-dgh2t3q1n-prakharg69s-projects.vercel.app/"],
-    credentials: true,
+    origin: true,        // 👈 allow all origins dynamically
+    credentials: true,   // 👈 allow cookies / auth headers
   },
 });
-
 io.on("connection", (socket) => {
   console.log("🟢 Socket connected:", socket.id);
 
